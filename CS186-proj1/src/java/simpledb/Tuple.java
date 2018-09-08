@@ -13,6 +13,11 @@ public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private TupleDesc tupleDesc;
+
+    private RecordId recordId;
+
+    private Field[] fields;
     /**
      * Create a new tuple with the specified schema (type).
      * 
@@ -22,6 +27,10 @@ public class Tuple implements Serializable {
      */
     public Tuple(TupleDesc td) {
         // some code goes here
+        if (td.numFields() == 0)
+            throw new IllegalArgumentException("TupleDesc must have at least one field");
+        this.tupleDesc = td;
+        fields = new Field[tupleDesc.numFields()];
     }
 
     /**
@@ -29,7 +38,7 @@ public class Tuple implements Serializable {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return tupleDesc;
     }
 
     /**
@@ -38,7 +47,7 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // some code goes here
-        return null;
+        return this.recordId;
     }
 
     /**
@@ -49,6 +58,7 @@ public class Tuple implements Serializable {
      */
     public void setRecordId(RecordId rid) {
         // some code goes here
+        this.recordId = rid;
     }
 
     /**
@@ -61,6 +71,9 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
+        if (i >= tupleDesc.numFields() || i < 0)
+            throw new IllegalArgumentException("index must be valid!");
+        fields[i] = f;
     }
 
     /**
@@ -71,7 +84,9 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // some code goes here
-        return null;
+        if (i >= tupleDesc.numFields() || i < 0)
+            throw new IllegalArgumentException("index must be valid!");
+        return fields[i];
     }
 
     /**
@@ -84,7 +99,11 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        StringBuilder stringBuilder = new StringBuilder("");
+        for (Field field : fields) {
+            stringBuilder.append(field).append('\t');
+        }
+        return stringBuilder.replace(stringBuilder.length() - 1, stringBuilder.length(), "\n").toString();
     }
     
     /**
@@ -94,6 +113,19 @@ public class Tuple implements Serializable {
     public Iterator<Field> fields()
     {
         // some code goes here
-        return null;
+        return new tupleIterator();
+    }
+
+    private class  tupleIterator implements Iterator<Field> {
+
+        int pos = 0;
+        @Override
+        public boolean hasNext() {
+            return pos < fields.length;
+        }
+        @Override
+        public Field next() {
+            return fields[pos++];
+        }
     }
 }

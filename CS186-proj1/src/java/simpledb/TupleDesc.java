@@ -49,9 +49,7 @@ public class TupleDesc implements Serializable {
         }
 
         public boolean equals(TDItem tdItem) {
-            if (this.fieldType.equals(tdItem.fieldType))
-                return true;
-            return false;
+            return this.fieldType.equals(tdItem.fieldType);
         }
     }
 
@@ -71,8 +69,7 @@ public class TupleDesc implements Serializable {
         private int position = 0;
         @Override
         public boolean hasNext() {
-            if (tdItems.length > position) return true;
-            return false;
+            return tdItems.length > position;
         }
 
         @Override
@@ -276,5 +273,8 @@ public class TupleDesc implements Serializable {
             stringBuilder.append(tdItem.fieldType).append("(").append(tdItem.fieldName).append("),");
         }
         return stringBuilder.toString();
+    }
+    public TDItem[] getTDItems() {
+        return this.tdItems;
     }
 }
