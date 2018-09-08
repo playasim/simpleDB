@@ -174,6 +174,8 @@ public class TupleDesc implements Serializable {
     public int fieldNameToIndex(String name) throws NoSuchElementException {
         // some code goes here
         for (int i = 0; i < tdItems.length; i ++) {
+            if (tdItems[i].fieldName == null)
+                break;
             if (tdItems[i].fieldName.equals(name))
                 return i;
         }
@@ -221,10 +223,10 @@ public class TupleDesc implements Serializable {
             res.tdItems[i] = new TDItem( td1.tdItems[i].fieldType,  td1.tdItems[i].fieldName);
             pos ++;
         }
-        for (int j = 0; j < td2.numFields; j ++) {
-            res.tdItems[j + pos] = new TDItem( td2.tdItems[j].fieldType,  td2.tdItems[j].fieldName);
-            j ++;
+        for (int i = 0; i < td2.numFields; i++) {
+            res.tdItems[i + pos] = new TDItem( td2.tdItems[i].fieldType,  td2.tdItems[i].fieldName);
         }
+
         return res;
     }
 
