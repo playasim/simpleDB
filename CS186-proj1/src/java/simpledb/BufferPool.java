@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -20,6 +21,9 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+
+    private Page[] pageList;
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -27,6 +31,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        pageList = new Page[numPages];
     }
 
     /**
@@ -47,6 +52,12 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
+        if (perm.permLevel != 0 && perm.permLevel != 1)
+            throw new DbException("no Permisson to read or write this page");
+        for (Page page : pageList) {
+            if (page.getId() == pid)
+                return page;
+        }
         return null;
     }
 
