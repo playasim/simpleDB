@@ -16,12 +16,27 @@ import java.util.*;
 
 public class Catalog {
 
+    private int[] tableIdArr;
+    //tableId to DBFile
+    private Map<Integer, DbFile> tableId2file;
+    //table name to tableId
+    private Map<String, Integer> table2tableId;
+    //table name to pKey
+    private Map<String, String> table2pkey;
+    //tableId to talbe
+    private Map<Integer, String> tableId2table;
+
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
         // some code goes here
+        tableId2file = new HashMap<>();
+        table2tableId = new HashMap<>();
+        tableId2table = new HashMap<>();
+        table2pkey = new HashMap<>();
+
     }
 
     /**
@@ -30,11 +45,17 @@ public class Catalog {
      * @param file the contents of the table to add;  file.getId() is the identfier of
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      * @param name the name of the table -- may be an empty string.  May not be null.  If a name
+     *             conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
-     * conflict exists, use the last table to be added as the table for a given name.
+     *
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+        int tableId = file.getId();
+        tableId2file.put(tableId, file);
+        table2pkey.put(name, pkeyField);
+        table2tableId.put(name, tableId);
+        tableId2table.put(tableId, name);
     }
 
     public void addTable(DbFile file, String name) {
@@ -58,7 +79,9 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        if (name == null || !table2tableId.containsKey(name))
+            throw new NoSuchElementException("name can not be null or catalog don't have this table");
+        return table2tableId.get(name);
     }
 
     /**
@@ -68,8 +91,9 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        if (!table2tableId.containsValue(tableid))
+            throw new NoSuchElementException("catalog don't have this table");
+        return tableId2file.get(tableid).getTupleDesc();
     }
 
     /**
@@ -80,27 +104,38 @@ public class Catalog {
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+        if (!table2tableId.containsValue(tableid))
+            throw new NoSuchElementException("catalog don't have this table");
+        return tableId2file.get(tableid);
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+        if (!table2tableId.containsValue(tableid))
+            throw new NoSuchElementException("catalog don't have this table");
+        String name = tableId2table.get(tableid);
+        return table2pkey.get(name);
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+        return tableId2table.keySet().iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+        if (!table2tableId.containsValue(id))
+            throw new NoSuchElementException("catalog don't have this table");
+        return tableId2table.get(id);
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+        tableId2table.clear();
+        table2pkey.clear();
+        tableId2file.clear();
+        table2tableId.clear();
     }
     
     /**
