@@ -45,8 +45,11 @@ public class HeapPage implements Page {
 
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
-        for (int i=0; i<header.length; i++)
+        for (int i=0; i<header.length; i++) {
             header[i] = dis.readByte();
+        }
+
+
 
         try{
             // allocate and read the actual records of this page
@@ -66,7 +69,10 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+        if (numSlots != 0)
+            return numSlots;
+        double nums = Math.floor(BufferPool.PAGE_SIZE * 8 / (td.getSize() * 8 + 1));
+        return (int) nums;
 
     }
 
@@ -74,10 +80,14 @@ public class HeapPage implements Page {
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
-        
+    private int getHeaderSize() {
         // some code goes here
-        return 0;
+        //ceil向上取整，
+        //eg : 20 tuples
+        //headerByte = 20 / 8 = 2,
+        //headerByte * 8 < tuples
+        //then : headerByte += 1
+        return (int) Math.ceil(numSlots / 8);
                  
     }
     
@@ -103,7 +113,8 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
+    //throw new UnsupportedOperationException("implement this");
     }
 
     /**
@@ -273,7 +284,12 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int result = 0;
+        for (int i = 0; i < tuples.length; i++) {
+            if (!isSlotUsed(i))
+                result ++;
+        }
+        return result;
     }
 
     /**
@@ -281,7 +297,17 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        int position = i / 8;
+        int posInByte = i % 8;
+        //假如这是一个byte : 0001 1 011 ,posInByte = 3
+        //也就是中间被隔离的这个1
+        //将byte右移posInByte位 : 000 00011
+        //再判断这个数是否为 2整除即可
+        if (header[position] > 0)
+            return (header[position] >> posInByte) % 2 == 1;
+        //因为jdk1.8中byte 是 assigned，所以要转变成unassigned
+        int unassignedByte = header[position] & 0xff;
+        return (int) (unassignedByte / Math.pow(2, posInByte)) % 2 == 1;
     }
 
     /**
@@ -298,7 +324,21 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        return new TupleInterator();
+    }
+
+    private class TupleInterator implements Iterator<Tuple> {
+
+        int pos = 0;
+        @Override
+        public boolean hasNext() {
+            return isSlotUsed(pos);
+        }
+
+        @Override
+        public Tuple next() {
+            return tuples[pos ++];
+        }
     }
 
 }
