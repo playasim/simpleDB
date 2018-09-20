@@ -17,8 +17,7 @@ public class HeapFile implements DbFile {
 
     private File file;
     private TupleDesc td;
-    private int id;
-    private HeapPage[] pages;
+    private int numPage;
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -30,7 +29,7 @@ public class HeapFile implements DbFile {
         // some code goes here
         this.file = f;
         this.td = td;
-        this.id = f.getAbsoluteFile().hashCode();
+        this.numPage = (int) (file.length() / BufferPool.PAGE_SIZE);
     }
 
     /**
@@ -54,7 +53,7 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        return id;
+        return file.getAbsolutePath().hashCode();
         // throw new UnsupportedOperationException("implement this");
     }
 
@@ -69,10 +68,36 @@ public class HeapFile implements DbFile {
         // throw new UnsupportedOperationException("implement this");
     }
 
+    /**
+     * 根据PageId从磁盘读取一个页，注意此方法只应该在BufferPool类被直接调用
+     * 在其他需要page的地方需要通过BufferPool访问。这样才能实现缓存功能
+     *
+     * @param pid
+     * @return 读取得到的Page
+     *
+     */
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
         // some code goes here
-        return this.readPage(pid);
+        Page page = null;
+        //数据会被写入到data中
+        byte[] data= new byte[BufferPool.PAGE_SIZE];
+        try {
+            //RandomAccessFile可以让我们能够在file中访问任意位置
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            //这个Page正确的偏移量
+            long offset = pid.pageNumber() * BufferPool.PAGE_SIZE;
+            //将file pointer移到这里
+            raf.seek(offset);
+            //读取数据，将数据存入data中
+            raf.read(data, 0, BufferPool.PAGE_SIZE);
+            page = new HeapPage((HeapPageId) pid, data);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return page;
     }
 
     // see DbFile.java for javadocs
@@ -86,7 +111,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        return numPage;
     }
 
     // see DbFile.java for javadocs
@@ -106,9 +131,33 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public DbFileIterator iterator(TransactionId tid) {
+    public DbFileIterator iterator(TransactionId tid)  {
         // some code goes here
-        return null;
+
+        int pos = 0;
+        return new heapFileIterator(tid);
+    }
+
+    private class heapFileIterator implements Iterator<Tuple> {
+
+        int pos = 0;
+        private TransactionId tid;
+        BufferPool bufferPool = new BufferPool(numPages());
+
+        public heapFileIterator(TransactionId tid) {
+            this.tid = tid;
+        }
+
+        @Override
+        public boolean hasNext() {
+            bufferPool.getPage(tid,)
+            return false;
+        }
+
+        @Override
+        public Tuple next() {
+            return null;
+        }
     }
 
 }
