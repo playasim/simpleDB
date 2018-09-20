@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
@@ -51,6 +52,7 @@ public class HeapFile implements DbFile {
      * 
      * @return an ID uniquely identifying this HeapFile.
      */
+    //id就是tableid
     public int getId() {
         // some code goes here
         return file.getAbsolutePath().hashCode();
@@ -92,8 +94,6 @@ public class HeapFile implements DbFile {
             //读取数据，将数据存入data中
             raf.read(data, 0, BufferPool.PAGE_SIZE);
             page = new HeapPage((HeapPageId) pid, data);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -133,30 +133,72 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid)  {
         // some code goes here
-
-        int pos = 0;
         return new heapFileIterator(tid);
     }
 
-    private class heapFileIterator implements Iterator<Tuple> {
+    private class heapFileIterator implements DbFileIterator {
 
-        int pos = 0;
+        private int pos;
         private TransactionId tid;
-        BufferPool bufferPool = new BufferPool(numPages());
+        BufferPool bufferPool = Database.getBufferPool();
+        Iterator<Tuple> tuplesInPage;
+
+        private Iterator<Tuple> getTuplesInPage(PageId pageId) throws TransactionAbortedException, DbException {
+            HeapPage page = (HeapPage) bufferPool.getPage(tid, pageId, Permissions.READ_ONLY);
+            return page.iterator();
+        }
 
         public heapFileIterator(TransactionId tid) {
             this.tid = tid;
         }
 
+
         @Override
-        public boolean hasNext() {
-            bufferPool.getPage(tid,)
-            return false;
+        public void open() throws DbException, TransactionAbortedException {
+            pos = 0;
+            HeapPageId pid = new HeapPageId(getId(), pos);
+            tuplesInPage = getTuplesInPage(pid);
         }
 
         @Override
-        public Tuple next() {
-            return null;
+        public boolean hasNext() throws TransactionAbortedException, DbException {
+            //如果迭代器为空，没有next
+            if (tuplesInPage == null)
+                return false;
+
+            if (tuplesInPage.hasNext())
+                return true;
+            //此页遍历完后，检查是否还有下一页
+            if (pos < numPages() - 1) {
+                pos ++;
+                //getId指tableId, pos指page number
+                PageId pageId = new HeapPageId(getId(), pos);
+                //产生新的迭代器
+                tuplesInPage = getTuplesInPage(pageId);
+                return tuplesInPage.hasNext();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public Tuple next() throws TransactionAbortedException, DbException {
+            if (!hasNext()) {
+                throw new NoSuchElementException("not opened or no tuple remained");
+            }
+            return tuplesInPage.next();
+        }
+
+        @Override
+        public void rewind() throws DbException, TransactionAbortedException {
+            open();
+        }
+
+        //close和open的区别是：有没有初始化tuplesInPage
+        @Override
+        public void close() {
+            pos = 0;
+            tuplesInPage = null;
         }
     }
 

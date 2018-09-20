@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -21,8 +22,8 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
-
-    private Page[] pageList;
+    private final int PAGE_NUM;
+    private HashMap<PageId, Page> pid2page;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -31,7 +32,9 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
-        pageList = new Page[numPages];
+        PAGE_NUM = numPages;
+        pid2page = new HashMap<>(PAGE_NUM);
+
     }
 
     /**
@@ -50,15 +53,23 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException {
+        throws DbException {
         // some code goes here
         if (perm.permLevel != 0 && perm.permLevel != 1)
             throw new DbException("no Permisson to read or write this page");
-        for (Page page : pageList) {
-            if (page.getId() == pid)
-                return page;
+        if (pid2page.containsKey(pid)) {//直接命中
+            return pid2page.get(pid);
+        } else {//未命中，访问磁盘并缓存
+            HeapFile table = (HeapFile) Database.getCatalog().getDbFile(pid.getTableId());
+            HeapPage newPage = (HeapPage) table.readPage(pid);
+            addNewPage(pid, newPage);
+            return newPage;
         }
-        return null;
+    }
+
+    private void addNewPage(PageId pid, Page newPage) {
+        pid2page.put(pid, newPage);
+        //如果超出了最大的缓存页数量
     }
 
     /**
