@@ -111,12 +111,12 @@ public class SystemTestUtil {
             throws DbException, TransactionAbortedException, IOException {
         ArrayList<ArrayList<Integer>> copy = new ArrayList<ArrayList<Integer>>(tuples);
 
-        if (Debug.isEnabled()) {
+
             Debug.log("Expected tuples:");
             for (ArrayList<Integer> t : copy) {
                 Debug.log("\t" + Utility.listToString(t));
             }
-        }
+
 
         iterator.open();
         while (iterator.hasNext()) {

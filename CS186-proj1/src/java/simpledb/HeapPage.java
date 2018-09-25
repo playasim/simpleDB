@@ -87,7 +87,13 @@ public class HeapPage implements Page {
         //headerByte = 20 / 8 = 2,
         //headerByte * 8 < tuples
         //then : headerByte += 1
-        return (int) Math.ceil(numSlots / 8);
+
+
+        //要准确的话一定要加上小数点！！！！！
+        //要不然后面的ScanTest过不了
+        System.out.println("Math.ceil(numSlots / 8.0) :" + (int)Math.ceil(numSlots / 8.0));
+        System.out.println("Math.ceil(numSlots / 8) :" + (int)Math.ceil(numSlots / 8));
+        return (int) Math.ceil(numSlots / 8.0);
                  
     }
     
@@ -329,15 +335,27 @@ public class HeapPage implements Page {
 
     private class TupleInterator implements Iterator<Tuple> {
 
+        /**pos表示已经循环过的已使用的tuple的数量
+            这里这样写是因为，tuple的写入不一定是顺序的
+            所以需要判断当前经过的tuple是否被使用过
+         */
         int pos = 0;
+        int index = 0;
+        int usedTuplesNum = getNumTuples() - getNumEmptySlots();
         @Override
         public boolean hasNext() {
-            return isSlotUsed(pos);
+            return index < getNumTuples() && pos < usedTuplesNum;
         }
 
         @Override
         public Tuple next() {
-            return tuples[pos ++];
+            if (!hasNext())
+                throw new NoSuchElementException("No more tuples");
+            while (!isSlotUsed(index)) {
+                index ++;
+            }
+            pos ++;
+            return tuples[index++];
         }
     }
 
