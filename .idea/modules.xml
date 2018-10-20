@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/CS186-proj1/CS186-proj1.iml" filepath="$PROJECT_DIR$/CS186-proj1/CS186-proj1.iml" />
       <module fileurl="file://$PROJECT_DIR$/CS186-proj1/src/CS186-proj11.iml" filepath="$PROJECT_DIR$/CS186-proj1/src/CS186-proj11.iml" />
+      <module fileurl="file://$PROJECT_DIR$/CS186-proj2/CS186-proj2.iml" filepath="$PROJECT_DIR$/CS186-proj2/CS186-proj2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/CS186-proj2/src/CS186-proj21.iml" filepath="$PROJECT_DIR$/CS186-proj2/src/CS186-proj21.iml" />
     </modules>
   </component>
 </project>
